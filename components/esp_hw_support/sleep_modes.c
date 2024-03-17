@@ -117,7 +117,11 @@
 #define ESP_SLEEP_WAIT_FLASH_READY_DEFAULT_DELAY_US 700
 
 // Cycles for RTC Timer clock source (internal oscillator) calibrate
+#ifndef CONFIG_RTC_CLK_SLEEP_CAL_CYCLES
 #define RTC_CLK_SRC_CAL_CYCLES      (10)
+#else
+#define RTC_CLK_SRC_CAL_CYCLES CONFIG_RTC_CLK_SLEEP_CAL_CYCLES
+#endif
 #define FAST_CLK_SRC_CAL_CYCLES     (2048)  /* ~ 127.4 us */
 
 #ifdef CONFIG_IDF_TARGET_ESP32
@@ -568,23 +572,27 @@ inline static void IRAM_ATTR misc_modules_wake_prepare(void)
 static IRAM_ATTR void sleep_low_power_clock_calibration(bool is_dslp)
 {
     // Calibrate rtc slow clock
+    if (RTC_CLK_SRC_CAL_CYCLES > 0) {
 #ifdef CONFIG_ESP_SYSTEM_RTC_EXT_XTAL
-    if (rtc_clk_slow_src_get() == SOC_RTC_SLOW_CLK_SRC_XTAL32K) {
-        uint64_t time_per_us = 1000000ULL;
-        s_config.rtc_clk_cal_period = (time_per_us << RTC_CLK_CAL_FRACT) / rtc_clk_slow_freq_get_hz();
-    } else {
-        // If the external 32 kHz XTAL does not exist, use the internal 150 kHz RC oscillator
-        // as the RTC slow clock source.
+        if (rtc_clk_slow_src_get() == SOC_RTC_SLOW_CLK_SRC_XTAL32K) {
+            uint64_t time_per_us = 1000000ULL;
+            s_config.rtc_clk_cal_period = (time_per_us << RTC_CLK_CAL_FRACT) / rtc_clk_slow_freq_get_hz();
+        } else {
+            // If the external 32 kHz XTAL does not exist, use the internal 150 kHz RC oscillator
+            // as the RTC slow clock source.
+            s_config.rtc_clk_cal_period = rtc_clk_cal(RTC_CAL_RTC_MUX, RTC_CLK_SRC_CAL_CYCLES);
+            esp_clk_slowclk_cal_set(s_config.rtc_clk_cal_period);
+        }
+#elif CONFIG_RTC_CLK_SRC_INT_RC && CONFIG_IDF_TARGET_ESP32S2
+        s_config.rtc_clk_cal_period = rtc_clk_cal_cycling(RTC_CAL_RTC_MUX, RTC_CLK_SRC_CAL_CYCLES);
+        esp_clk_slowclk_cal_set(s_config.rtc_clk_cal_period);
+#else
         s_config.rtc_clk_cal_period = rtc_clk_cal(RTC_CAL_RTC_MUX, RTC_CLK_SRC_CAL_CYCLES);
         esp_clk_slowclk_cal_set(s_config.rtc_clk_cal_period);
-    }
-#elif CONFIG_RTC_CLK_SRC_INT_RC && CONFIG_IDF_TARGET_ESP32S2
-    s_config.rtc_clk_cal_period = rtc_clk_cal_cycling(RTC_CAL_RTC_MUX, RTC_CLK_SRC_CAL_CYCLES);
-    esp_clk_slowclk_cal_set(s_config.rtc_clk_cal_period);
-#else
-    s_config.rtc_clk_cal_period = rtc_clk_cal(RTC_CAL_RTC_MUX, RTC_CLK_SRC_CAL_CYCLES);
-    esp_clk_slowclk_cal_set(s_config.rtc_clk_cal_period);
 #endif
+    } else {
+        s_config.rtc_clk_cal_period = esp_clk_slowclk_cal_get();
+    }
 
     // Calibrate rtc fast clock, only PMU supported chips sleep process is needed.
 #if SOC_PMU_SUPPORTED
