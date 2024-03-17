@@ -672,7 +672,13 @@ static esp_err_t process_segment_data(int segment, intptr_t load_addr, uint32_t 
     }
 
     if (checksum == NULL && sha_handle == NULL) {
+        //int a = esp_cpu_get_cycle_count();
         memcpy((void *)load_addr, data, data_len);
+        // int b = esp_cpu_get_cycle_count();
+        // for (int i=0; i < data_len / 4 && i < 10; i++)
+        //     ESP_LOGE(TAG, "i%d 0x%"PRIx32, i, data[i]);    
+        // ESP_LOGE(TAG, "bootloader_load(size 0x%"PRIx32", time %d)",
+        //          data_len, b-a);
         bootloader_munmap(data);
         return ESP_OK;
     }
