@@ -441,7 +441,7 @@ static inline void touch_ll_clear_group_mask(uint16_t group1_mask, uint16_t grou
  */
 static inline void touch_ll_read_trigger_status_mask(uint32_t *status_mask)
 {
-    *status_mask = TOUCH_LL_BITS_SWAP(SENS.sar_touch_ctrl2.touch_meas_en);
+    *status_mask = TOUCH_LL_BITS_SWAP(SENS.sar_touch_ctrl2.touch_meas_en & SENS.sar_touch_enable.touch_pad_worken);
 }
 
 /**
