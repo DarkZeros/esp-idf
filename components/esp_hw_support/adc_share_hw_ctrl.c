@@ -149,7 +149,8 @@ esp_err_t adc_lock_release(adc_unit_t adc_unit)
     }
 
     if (adc_unit == ADC_UNIT_1) {
-        ESP_RETURN_ON_FALSE(((uint32_t *)adc1_lock != NULL), ESP_ERR_INVALID_STATE, TAG, "adc1 lock release without acquiring");
+        // Need to fix the ADC before Arduino
+        // ESP_RETURN_ON_FALSE(((uint32_t *)adc1_lock != NULL), ESP_ERR_INVALID_STATE, TAG, "adc1 lock release without acquiring");
         _lock_release(&adc1_lock);
     }
 
