@@ -105,8 +105,11 @@ static void select_rtc_slow_clk(slow_clk_sel_t slow_clk)
              */
             cal_val = rtc_clk_cal(RTC_CAL_RTC_MUX, SLOW_CLK_CAL_CYCLES);
         } else {
-            const uint64_t cal_dividend = (1ULL << RTC_CLK_CAL_FRACT) * 1000000ULL;
-            cal_val = (uint32_t)(cal_dividend / rtc_clk_slow_freq_get_hz());
+            cal_val = esp_clk_slowclk_cal_get();
+            if (cal_val == 0) {
+                const uint64_t cal_dividend = (1ULL << RTC_CLK_CAL_FRACT) * 1000000ULL;
+                cal_val = (uint32_t)(cal_dividend / rtc_clk_slow_freq_get_hz());
+            }
         }
     } while (cal_val == 0);
     ESP_EARLY_LOGD(TAG, "RTC_SLOW_CLK calibration value: %" PRIu32, cal_val);
