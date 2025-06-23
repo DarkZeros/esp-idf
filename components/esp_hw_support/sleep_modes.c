@@ -1899,10 +1899,10 @@ esp_err_t esp_sleep_enable_ext0_wakeup(gpio_num_t gpio_num, int level)
         return ESP_ERR_INVALID_ARG;
     }
 #if CONFIG_IDF_TARGET_ESP32
-    if (s_config.wakeup_triggers & (RTC_TOUCH_TRIG_EN | RTC_ULP_TRIG_EN)) {
-        ESP_LOGE(TAG, "Conflicting wake-up triggers: touch / ULP");
-        return ESP_ERR_INVALID_STATE;
-    }
+    // if (s_config.wakeup_triggers & (RTC_TOUCH_TRIG_EN | RTC_ULP_TRIG_EN)) {
+    //     ESP_LOGE(TAG, "Conflicting wake-up triggers: touch / ULP");
+    //     return ESP_ERR_INVALID_STATE;
+    // }
 #endif //CONFIG_IDF_TARGET_ESP32
 
     s_config.ext0_rtc_gpio_num = rtc_io_number_get(gpio_num);
